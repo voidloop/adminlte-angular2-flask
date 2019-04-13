@@ -47,6 +47,8 @@
     ]
   },
   "jsRules": {
+    "no-console": false,
+    "no-shadowed-variable": false,
     "quotemark": [
       true,
       "single"

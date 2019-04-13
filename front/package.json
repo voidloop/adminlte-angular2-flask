@@ -157,10 +157,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AngularClass/angular-starter.git"
+    "url": "https://github.com/voidloop/angular2-flaskk.git"
   },
   "bugs": {
-    "url": "https://github.com/AngularClass/angular-starter/issues"
+    "url": "https://github.com/voidloop/angular2-flaskk/issues"
   },
   "engines": {
     "node": ">= 4.2.1",

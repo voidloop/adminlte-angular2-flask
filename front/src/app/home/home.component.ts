@@ -42,7 +42,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   private handleData(data: Response) {
     if (data.status === 200) {
-      let receivedData = data.json();
+      const receivedData = data.json();
       this.heroes = receivedData['Heroes'];
     }
     console.log(data.json());

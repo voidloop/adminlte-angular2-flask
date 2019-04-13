@@ -24,7 +24,7 @@ export class LoginFormComponent implements OnInit {
   public forgotPassword: boolean = false;
 
   constructor(private _service: AuthenticationService, private router: Router) {
-    let group: any = {};
+    const group: any = {};
     group.username = new FormControl('', Validators.required);
     group.password = new FormControl('', Validators.required);
     group.type = new FormControl('login');
@@ -42,7 +42,7 @@ export class LoginFormComponent implements OnInit {
 
   public loginUser() {
 
-    let body = {
+    const body = {
       username: this.myForm.controls['username'].value,
       password: this.myForm.controls['password'].value
     };
@@ -56,7 +56,7 @@ export class LoginFormComponent implements OnInit {
   private handleError(error: any) {
     // In a real world app, we might use a remote logging infrastructure
     // We'd also dig deeper into the error to get a better message
-    let errMsg = (error.message) ? error.message :
+    const errMsg = (error.message) ? error.message :
       error.status ? `${error.status} - ${error.statusText}` : 'Server error';
     console.error(errMsg); // log to console instead
     this.color = 'red';

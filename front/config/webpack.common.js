@@ -37,7 +37,7 @@ const METADATA = {
  *
  * See: http://webpack.github.io/docs/configuration.html#cli
  */
-module.exports = function (options) {
+module.exports = function(options) {
   isProd = options.env === 'production';
   return {
 

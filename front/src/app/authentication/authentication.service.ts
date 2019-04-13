@@ -55,11 +55,11 @@ export class AuthenticationService {
    * Extracts the current token from the local storage else redirects to
    * session expired modal.
    */
-  public postResource(body: String, url: string) {
-    let token = localStorage.getItem('token');
-    let postHeader = new Headers({ Authorization: 'Bearer ' + token });
+  public postResource(body: string, url: string) {
+    const token = localStorage.getItem('token');
+    const postHeader = new Headers({ Authorization: 'Bearer ' + token });
     postHeader.append('Content-Type', 'application/json');
-    let options = new RequestOptions({ headers: postHeader });
+    const options = new RequestOptions({ headers: postHeader });
     return this.http.post(url, body, options);
   }
 
@@ -67,21 +67,21 @@ export class AuthenticationService {
    * Get resource to fetch data from server using an end point as `url`
    */
   public getResource(url: string) {
-    let token = localStorage.getItem('token');
-    let getHeader = new Headers({ Authorization: 'Bearer ' + token });
-    let options = new RequestOptions({ headers: getHeader });
+    const token = localStorage.getItem('token');
+    const getHeader = new Headers({ Authorization: 'Bearer ' + token });
+    const options = new RequestOptions({ headers: getHeader });
     return this.http.get(url, options);
   }
 
   private extractToken(res: Response) {
-    let body = res.json();
+    const body = res.json();
     if (res.status === 200) {
-      let response = 'response';
-      let tokenString = 'jwt';
-      let token = body[tokenString];
-      //TODO: Decode token and get expiry time from here, someone has to implement this. :(
-      let expiry = new Date(body['exp']);
-      let maxTokenExpiryTime = expiry.getTime();
+      const response = 'response';
+      const tokenString = 'jwt';
+      const token = body[tokenString];
+      // TODO: Decode token and get expiry time from here, someone has to implement this. :(
+      const expiry = new Date(body['exp']);
+      const maxTokenExpiryTime = expiry.getTime();
       localStorage.setItem('token', token);
       localStorage.setItem('exp', String(maxTokenExpiryTime));
     }
@@ -93,8 +93,8 @@ export class AuthenticationService {
    * based on the first time authentication from server
    */
   private checkTokenExpired() {
-    let expiryTime = Number(localStorage.getItem('exp'));
-    let curTime = Math.floor(new Date().getTime() / 1000);
+    const expiryTime = Number(localStorage.getItem('exp'));
+    const curTime = Math.floor(new Date().getTime() / 1000);
     if (curTime > expiryTime) {
       console.log('Session expired.');
       return true;
@@ -105,7 +105,7 @@ export class AuthenticationService {
   private handleError(error: any) {
     // In a real world app, we might use a remote logging infrastructure
     // We'd also dig deeper into the error to get a better message
-    let errMsg = (error.message) ? error.message :
+    const errMsg = (error.message) ? error.message :
       error.status ? `${error.status} - ${error.statusText}` : 'Server error';
     console.error(errMsg); // log to console instead
     return Observable.throw(errMsg);

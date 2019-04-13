@@ -3,6 +3,7 @@
  */
 
 const helpers = require('./helpers');
+const path = require('path');
 const webpackMerge = require('webpack-merge'); // used to merge webpack configs
 const webpackMergeDll = webpackMerge.strategy({
   plugins: 'replace',
@@ -14,7 +15,7 @@ const commonConfig = require('./webpack.common.js'); // the settings that are co
  */
 const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
 const DefinePlugin = require('webpack/lib/DefinePlugin');
-const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin');
+//const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin');
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 
 /**

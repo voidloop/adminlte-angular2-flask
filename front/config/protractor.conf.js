@@ -10,10 +10,7 @@ exports.config = {
 
   baseUrl: 'http://localhost:3000/',
   capabilities: {
-    'browserName': 'chrome',
-    'chromeOptions': {
-      'args': ['show-fps-counter=true'],
-    },
+    'browserName': 'firefox',
   },
 
   directConnect: true,

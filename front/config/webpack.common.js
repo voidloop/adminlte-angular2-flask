@@ -19,7 +19,7 @@ const HtmlElementsPlugin = require('html-elements-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
-const ngcWebpack = require('ngc-webpack');
+//const ngcWebpack = require('ngc-webpack');
 
 /*
  * Webpack Constants
@@ -346,11 +346,11 @@ module.exports = function (options) {
         helpers.root('node_modules/@angular/core/src/facade/math.js'),
       ),
 
-      new ngcWebpack.NgcWebpackPlugin({
-        disabled: !AOT,
-        resourceOverride: helpers.root('config/resource-override.js'),
-        tsConfig: helpers.root('tsconfig.webpack.json'),
-      }),
+      // new ngcWebpack.NgcWebpackPlugin({
+      //   disabled: !AOT,
+      //   resourceOverride: helpers.root('config/resource-override.js'),
+      //   tsConfig: helpers.root('tsconfig.webpack.json'),
+      // }),
 
     ],
 

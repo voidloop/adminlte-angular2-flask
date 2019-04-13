@@ -7,7 +7,7 @@ import logging
 import traceback
 from datetime import datetime
 from flask import Response, request, jsonify, current_app
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 from flask_jwt_simple import (
     JWTManager, jwt_required, create_jwt, get_jwt_identity, get_jwt
 )

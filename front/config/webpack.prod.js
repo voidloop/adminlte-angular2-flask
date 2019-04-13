@@ -25,17 +25,17 @@ const ENV = process.env.NODE_ENV = process.env.ENV = 'production';
 const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 5000;
 const METADATA = webpackMerge(commonConfig({
-  env: ENV
+  env: ENV,
 }).metadata, {
+  ENV: ENV,
+  HMR: false,
   host: HOST,
   port: PORT,
-  ENV: ENV,
-  HMR: false
 });
 
 module.exports = function (env) {
   return webpackMerge(commonConfig({
-    env: ENV
+    env: ENV,
   }), {
 
     /**
@@ -46,6 +46,53 @@ module.exports = function (env) {
      */
     devtool: 'source-map',
 
+    module: {
+
+      rules: [
+
+        /*
+         * Extract CSS files from .src/styles directory to external CSS file
+         */
+        {
+          include: [helpers.root('src', 'styles')],
+          loader: ExtractTextPlugin.extract({
+            fallback: 'style-loader',
+            use: 'css-loader',
+          }),
+          test: /\.css$/,
+        },
+
+        /*
+         * Extract and compile SCSS files from .src/styles directory to external CSS file
+         */
+        {
+          include: [helpers.root('src', 'styles')],
+          loader: ExtractTextPlugin.extract({
+            fallback: 'style-loader',
+            use: 'css-loader!sass-loader',
+          }),
+          test: /\.scss$/,
+        },
+
+      ],
+
+    },
+
+    /*
+     * Include polyfills or mocks for various node stuff
+     * Description: Node configuration
+     *
+     * See: https://webpack.github.io/docs/configuration.html#node
+     */
+    node: {
+      clearImmediate: false,
+      crypto: 'empty',
+      global: true,
+      module: false,
+      process: false,
+      setImmediate: false,
+    },
+
     /**
      * Options affecting the output of the compilation.
      *
@@ -54,11 +101,12 @@ module.exports = function (env) {
     output: {
 
       /**
-       * The output directory as absolute path (required).
+       * The filename of non-entry chunks as relative path
+       * inside the output.path directory.
        *
-       * See: http://webpack.github.io/docs/configuration.html#output-path
+       * See: http://webpack.github.io/docs/configuration.html#output-chunkfilename
        */
-      path: helpers.root('dist'),
+      chunkFilename: '[id].[chunkhash].chunk.js',
 
       /**
        * Specifies the name of each output file on disk.
@@ -69,52 +117,19 @@ module.exports = function (env) {
       filename: '[name].[chunkhash].bundle.js',
 
       /**
+       * The output directory as absolute path (required).
+       *
+       * See: http://webpack.github.io/docs/configuration.html#output-path
+       */
+      path: helpers.root('dist'),
+
+      /**
        * The filename of the SourceMaps for the JavaScript files.
        * They are inside the output.path directory.
        *
        * See: http://webpack.github.io/docs/configuration.html#output-sourcemapfilename
        */
       sourceMapFilename: '[name].[chunkhash].bundle.map',
-
-      /**
-       * The filename of non-entry chunks as relative path
-       * inside the output.path directory.
-       *
-       * See: http://webpack.github.io/docs/configuration.html#output-chunkfilename
-       */
-      chunkFilename: '[id].[chunkhash].chunk.js'
-
-    },
-
-    module: {
-
-      rules: [
-
-        /*
-         * Extract CSS files from .src/styles directory to external CSS file
-         */
-        {
-          test: /\.css$/,
-          loader: ExtractTextPlugin.extract({
-            fallback: 'style-loader',
-            use: 'css-loader'
-          }),
-          include: [helpers.root('src', 'styles')]
-        },
-
-        /*
-         * Extract and compile SCSS files from .src/styles directory to external CSS file
-         */
-        {
-          test: /\.scss$/,
-          loader: ExtractTextPlugin.extract({
-            fallback: 'style-loader',
-            use: 'css-loader!sass-loader'
-          }),
-          include: [helpers.root('src', 'styles')]
-        },
-
-      ]
 
     },
 
@@ -133,7 +148,7 @@ module.exports = function (env) {
        */
 
       new OptimizeJsPlugin({
-        sourceMap: false
+        sourceMap: false,
       }),
 
       /**
@@ -159,9 +174,9 @@ module.exports = function (env) {
         'HMR': METADATA.HMR,
         'process.env': {
           'ENV': JSON.stringify(METADATA.ENV),
-          'NODE_ENV': JSON.stringify(METADATA.ENV),
           'HMR': METADATA.HMR,
-        }
+          'NODE_ENV': JSON.stringify(METADATA.ENV),
+        },
       }),
 
       /**
@@ -187,27 +202,26 @@ module.exports = function (env) {
         // }, // debug
         // comments: true, //debug
 
-
         beautify: false, //prod
-        output: {
-          comments: false
-        }, //prod
-        mangle: {
-          screw_ie8: true
-        }, //prod
         compress: {
-          screw_ie8: true,
-          warnings: false,
-          conditionals: true,
-          unused: true,
           comparisons: true,
-          sequences: true,
+          conditionals: true,
           dead_code: true,
           evaluate: true,
           if_return: true,
           join_vars: true,
-          negate_iife: false // we need this for lazy v8
+          negate_iife: false, // we need this for lazy v8
+          screw_ie8: true,
+          sequences: true,
+          unused: true,
+          warnings: false,
         },
+        mangle: {
+          screw_ie8: true,
+        }, //prod
+        output: {
+          comments: false,
+        }, //prod
       }),
 
       /**
@@ -219,14 +233,13 @@ module.exports = function (env) {
 
       new NormalModuleReplacementPlugin(
         /angular2-hmr/,
-        helpers.root('config/empty.js')
+        helpers.root('config/empty.js'),
       ),
 
       new NormalModuleReplacementPlugin(
         /zone\.js(\\|\/)dist(\\|\/)long-stack-trace-zone/,
-        helpers.root('config/empty.js')
+        helpers.root('config/empty.js'),
       ),
-
 
       // AoT
       // new NormalModuleReplacementPlugin(
@@ -277,8 +290,8 @@ module.exports = function (env) {
        * See: https://gist.github.com/sokra/27b24881210b56bbaff7
        */
       new LoaderOptionsPlugin({
-        minimize: true,
         debug: false,
+        minimize: true,
         options: {
 
           /**
@@ -288,18 +301,18 @@ module.exports = function (env) {
            */
           // TODO: Need to workaround Angular 2's html syntax => #id [bind] (event) *ngFor
           htmlLoader: {
-            minimize: true,
-            removeAttributeQuotes: false,
             caseSensitive: true,
+            customAttrAssign: [/\)?\]?=/],
             customAttrSurround: [
               [/#/, /(?:)/],
               [/\*/, /(?:)/],
-              [/\[?\(?/, /(?:)/]
+              [/\[?\(?/, /(?:)/],
             ],
-            customAttrAssign: [/\)?\]?=/]
+            minimize: true,
+            removeAttributeQuotes: false,
           },
 
-        }
+        },
       }),
 
       /**
@@ -314,20 +327,5 @@ module.exports = function (env) {
 
     ],
 
-    /*
-     * Include polyfills or mocks for various node stuff
-     * Description: Node configuration
-     *
-     * See: https://webpack.github.io/docs/configuration.html#node
-     */
-    node: {
-      global: true,
-      crypto: 'empty',
-      process: false,
-      module: false,
-      clearImmediate: false,
-      setImmediate: false
-    }
-
   });
-}
+};

@@ -54,5 +54,11 @@
       "ban-keywords",
       "check-format"
     ]
+  },
+  "jsRules": {
+    "quotemark": [
+      true,
+      "single"
+    ]
   }
 }

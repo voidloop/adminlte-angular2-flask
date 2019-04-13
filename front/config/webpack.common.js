@@ -15,7 +15,7 @@ const ContextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin')
 const CommonsChunkPlugin = require('webpack/lib/optimize/CommonsChunkPlugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CheckerPlugin = require('awesome-typescript-loader').CheckerPlugin;
-const HtmlElementsPlugin = require('./html-elements-plugin');
+const HtmlElementsPlugin = require('html-elements-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
@@ -27,9 +27,9 @@ const ngcWebpack = require('ngc-webpack');
 const HMR = helpers.hasProcessFlag('hot');
 const AOT = helpers.hasNpmFlag('aot');
 const METADATA = {
-  title: 'Angular2 Webpack Starter by @gdi2290 from @AngularClass',
   baseUrl: '/',
-  isDevServer: helpers.isWebpackDevServer()
+  isDevServer: helpers.isWebpackDevServer(),
+  title: 'Angular2 Webpack Starter by @gdi2290 from @AngularClass',
 };
 
 /*
@@ -58,28 +58,8 @@ module.exports = function (options) {
      */
     entry: {
 
+      'main': AOT ? './src/main.browser.aot.ts' : './src/main.browser.ts',
       'polyfills': './src/polyfills.browser.ts',
-      'main':      AOT ? './src/main.browser.aot.ts' :
-                  './src/main.browser.ts'
-
-    },
-
-    /*
-     * Options affecting the resolving of modules.
-     *
-     * See: http://webpack.github.io/docs/configuration.html#resolve
-     */
-    resolve: {
-
-      /*
-       * An array of extensions that should be used to resolve modules.
-       *
-       * See: http://webpack.github.io/docs/configuration.html#resolve-extensions
-       */
-      extensions: ['.ts', '.js', '.json'],
-
-      // An array of directory names to be resolved to the current directory
-      modules: [helpers.root('src'), helpers.root('node_modules')],
 
     },
 
@@ -106,34 +86,34 @@ module.exports = function (options) {
          * See: https://github.com/shlomiassaf/ng-router-loader
          */
         {
+          exclude: [/\.(spec|e2e)\.ts$/],
           test: /\.ts$/,
           use: [
             {
               loader: '@angularclass/hmr-loader',
               options: {
                 pretty: !isProd,
-                prod: isProd
-              }
+                prod: isProd,
+              },
             },
             { // MAKE SURE TO CHAIN VANILLA JS CODE, I.E. TS COMPILATION OUTPUT.
               loader: 'ng-router-loader',
               options: {
-                loader: 'async-import',
+                aot: AOT,
                 genDir: 'compiled',
-                aot: AOT
-              }
+                loader: 'async-import',
+              },
             },
             {
               loader: 'awesome-typescript-loader',
               options: {
-                configFileName: 'tsconfig.webpack.json'
-              }
+                configFileName: 'tsconfig.webpack.json',
+              },
             },
             {
-              loader: 'angular2-template-loader'
-            }
+              loader: 'angular2-template-loader',
+            },
           ],
-          exclude: [/\.(spec|e2e)\.ts$/]
         },
 
         /*
@@ -143,7 +123,7 @@ module.exports = function (options) {
          */
         {
           test: /\.json$/,
-          use: 'json-loader'
+          use: 'json-loader',
         },
 
         /*
@@ -152,9 +132,9 @@ module.exports = function (options) {
          *
          */
         {
+          exclude: [helpers.root('src', 'styles')],
           test: /\.css$/,
           use: ['to-string-loader', 'css-loader'],
-          exclude: [helpers.root('src', 'styles')]
         },
 
         /*
@@ -163,9 +143,9 @@ module.exports = function (options) {
          *
          */
         {
+          exclude: [helpers.root('src', 'styles')],
           test: /\.scss$/,
           use: ['to-string-loader', 'css-loader', 'sass-loader'],
-          exclude: [helpers.root('src', 'styles')]
         },
 
         /* Raw loader support for *.html
@@ -174,28 +154,43 @@ module.exports = function (options) {
          * See: https://github.com/webpack/raw-loader
          */
         {
+          exclude: [helpers.root('src/index.html')],
           test: /\.html$/,
           use: 'raw-loader',
-          exclude: [helpers.root('src/index.html')]
         },
 
-        /* 
+        /*
          * File loader for supporting images, for example, in CSS files.
          */
         {
           test: /\.(jpg|png|gif)$/,
-          use: 'file-loader'
+          use: 'file-loader',
         },
 
         /* File loader for supporting fonts, for example, in CSS files.
         */
-        { 
+        {
           test: /\.(eot|woff2?|svg|ttf)([\?]?.*)$/,
-          use: 'file-loader'
-        }
+          use: 'file-loader',
+        },
 
       ],
 
+    },
+
+    /*
+     * Include polyfills or mocks for various node stuff
+     * Description: Node configuration
+     *
+     * See: https://webpack.github.io/docs/configuration.html#node
+     */
+    node: {
+      clearImmediate: false,
+      crypto: 'empty',
+      global: true,
+      module: false,
+      process: true,
+      setImmediate: false,
     },
 
     /*
@@ -205,9 +200,9 @@ module.exports = function (options) {
      */
     plugins: [
       new AssetsPlugin({
-        path: helpers.root('dist'),
         filename: 'webpack-assets.json',
-        prettyPrint: true
+        path: helpers.root('dist'),
+        prettyPrint: true,
       }),
 
       /*
@@ -226,18 +221,18 @@ module.exports = function (options) {
        * See: https://github.com/webpack/docs/wiki/optimization#multi-page-app
        */
       new CommonsChunkPlugin({
+        chunks: ['polyfills'],
         name: 'polyfills',
-        chunks: ['polyfills']
       }),
       // This enables tree shaking of the vendor modules
       new CommonsChunkPlugin({
-        name: 'vendor',
         chunks: ['main'],
-        minChunks: module => /node_modules/.test(module.resource)
+        minChunks: module => /node_modules/.test(module.resource),
+        name: 'vendor',
       }),
       // Specify the correct order the scripts will be injected in
       new CommonsChunkPlugin({
-        name: ['polyfills', 'vendor'].reverse()
+        name: ['polyfills', 'vendor'].reverse(),
       }),
 
       /**
@@ -253,7 +248,7 @@ module.exports = function (options) {
         helpers.root('src'), // location of your src
         {
           // your Angular Async Route paths relative to this root directory
-        }
+        },
       ),
 
       /*
@@ -266,9 +261,8 @@ module.exports = function (options) {
        */
       new CopyWebpackPlugin([
         { from: 'src/assets', to: 'assets' },
-        { from: 'src/meta'}
+        { from: 'src/meta'},
       ]),
-
 
       /*
        * Plugin: HtmlWebpackPlugin
@@ -279,11 +273,11 @@ module.exports = function (options) {
        * See: https://github.com/ampedandwired/html-webpack-plugin
        */
       new HtmlWebpackPlugin({
+        chunksSortMode: 'dependency',
+        inject: 'head',
+        metadata: METADATA,
         template: 'src/index.html',
         title: METADATA.title,
-        chunksSortMode: 'dependency',
-        metadata: METADATA,
-        inject: 'head'
       }),
 
       /*
@@ -294,7 +288,7 @@ module.exports = function (options) {
        * See: https://github.com/numical/script-ext-html-webpack-plugin
        */
       new ScriptExtHtmlWebpackPlugin({
-        defaultAttribute: 'defer'
+        defaultAttribute: 'defer',
       }),
 
       /*
@@ -320,7 +314,7 @@ module.exports = function (options) {
        * Dependencies: HtmlWebpackPlugin
        */
       new HtmlElementsPlugin({
-        headTags: require('./head-config.common')
+        headTags: require('./head-config.common'),
       }),
 
       /**
@@ -333,47 +327,51 @@ module.exports = function (options) {
       // Fix Angular 2
       new NormalModuleReplacementPlugin(
         /facade(\\|\/)async/,
-        helpers.root('node_modules/@angular/core/src/facade/async.js')
+        helpers.root('node_modules/@angular/core/src/facade/async.js'),
       ),
       new NormalModuleReplacementPlugin(
         /facade(\\|\/)collection/,
-        helpers.root('node_modules/@angular/core/src/facade/collection.js')
+        helpers.root('node_modules/@angular/core/src/facade/collection.js'),
       ),
       new NormalModuleReplacementPlugin(
         /facade(\\|\/)errors/,
-        helpers.root('node_modules/@angular/core/src/facade/errors.js')
+        helpers.root('node_modules/@angular/core/src/facade/errors.js'),
       ),
       new NormalModuleReplacementPlugin(
         /facade(\\|\/)lang/,
-        helpers.root('node_modules/@angular/core/src/facade/lang.js')
+        helpers.root('node_modules/@angular/core/src/facade/lang.js'),
       ),
       new NormalModuleReplacementPlugin(
         /facade(\\|\/)math/,
-        helpers.root('node_modules/@angular/core/src/facade/math.js')
+        helpers.root('node_modules/@angular/core/src/facade/math.js'),
       ),
 
       new ngcWebpack.NgcWebpackPlugin({
         disabled: !AOT,
+        resourceOverride: helpers.root('config/resource-override.js'),
         tsConfig: helpers.root('tsconfig.webpack.json'),
-        resourceOverride: helpers.root('config/resource-override.js')
-      })
+      }),
 
     ],
 
     /*
-     * Include polyfills or mocks for various node stuff
-     * Description: Node configuration
+     * Options affecting the resolving of modules.
      *
-     * See: https://webpack.github.io/docs/configuration.html#node
+     * See: http://webpack.github.io/docs/configuration.html#resolve
      */
-    node: {
-      global: true,
-      crypto: 'empty',
-      process: true,
-      module: false,
-      clearImmediate: false,
-      setImmediate: false
-    }
+    resolve: {
+
+      /*
+       * An array of extensions that should be used to resolve modules.
+       *
+       * See: http://webpack.github.io/docs/configuration.html#resolve-extensions
+       */
+      extensions: ['.ts', '.js', '.json'],
+
+      // An array of directory names to be resolved to the current directory
+      modules: [helpers.root('src'), helpers.root('node_modules')],
+
+    },
 
   };
-}
+};

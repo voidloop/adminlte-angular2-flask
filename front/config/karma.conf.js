@@ -7,22 +7,40 @@ module.exports = function (config) {
 
   var configuration = {
 
+    // enable / disable watching file and executing tests whenever any file changes
+    autoWatch: false,
+
     // base path that will be used to resolve all patterns (e.g. files, exclude)
     basePath: '',
 
     /*
-     * Frameworks to use
-     *
-     * available frameworks: https://npmjs.org/browse/keyword/karma-adapter
+     * start these browsers
+     * available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
      */
-    frameworks: ['jasmine'],
+    browsers: [
+      'Chrome',
+    ],
+
+    client: {
+      captureConsole: false,
+    },
+
+    // enable / disable colors in the output (reporters and logs)
+    colors: true,
+
+    coverageReporter: {
+      type: 'in-memory',
+    },
+
+    customLaunchers: {
+      ChromeTravisCi: {
+        base: 'Chrome',
+        flags: ['--no-sandbox'],
+      },
+    },
 
     // list of files to exclude
     exclude: [],
-
-    client: {
-      captureConsole: false
-    },
 
     /*
      * list of files / patterns to load in the browser
@@ -31,15 +49,24 @@ module.exports = function (config) {
      */
     files: [
       { pattern: './config/spec-bundle.js', watched: false },
-      { pattern: './src/assets/**/*', watched: false, included: false, served: true, nocache: false }
+      { pattern: './src/assets/**/*', watched: false, included: false, served: true, nocache: false },
     ],
 
     /*
-     * By default all assets are served at http://localhost:[PORT]/base/
+     * Frameworks to use
+     *
+     * available frameworks: https://npmjs.org/browse/keyword/karma-adapter
      */
-    proxies: {
-      "/assets/": "/base/src/assets/"
-    },
+    frameworks: ['jasmine'],
+
+    /*
+     * level of logging
+     * possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
+     */
+    logLevel: config.LOG_WARN,
+
+    // web server port
+    port: 9876,
 
     /*
      * preprocess matching files before serving them to the browser
@@ -47,29 +74,17 @@ module.exports = function (config) {
      */
     preprocessors: { './config/spec-bundle.js': ['coverage', 'webpack', 'sourcemap'] },
 
-    // Webpack Config at ./webpack.test.js
-    webpack: testWebpackConfig,
-
-    coverageReporter: {
-      type: 'in-memory'
+    /*
+     * By default all assets are served at http://localhost:[PORT]/base/
+     */
+    proxies: {
+      '/assets/': '/base/src/assets/',
     },
 
     remapCoverageReporter: {
-      'text-summary': null,
+      html: './coverage/html',
       json: './coverage/coverage.json',
-      html: './coverage/html'
-    },
-
-    // Webpack please don't spam the console when running in karma!
-    webpackMiddleware: {
-      // webpack-dev-middleware configuration
-      // i.e.
-      noInfo: true,
-      // and use stats to turn off verbose output
-      stats: {
-        // options i.e. 
-        chunks: false
-      }
+      'text-summary': null,
     },
 
     /*
@@ -80,46 +95,31 @@ module.exports = function (config) {
      */
     reporters: ['mocha', 'coverage', 'remap-coverage'],
 
-    // web server port
-    port: 9876,
-
-    // enable / disable colors in the output (reporters and logs)
-    colors: true,
-
-    /*
-     * level of logging
-     * possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-     */
-    logLevel: config.LOG_WARN,
-
-    // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: false,
-
-    /*
-     * start these browsers
-     * available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-     */
-    browsers: [
-      'Chrome'
-    ],
-
-    customLaunchers: {
-      ChromeTravisCi: {
-        base: 'Chrome',
-        flags: ['--no-sandbox']
-      }
-    },
-
     /*
      * Continuous Integration mode
      * if true, Karma captures browsers, runs the tests and exits
      */
-    singleRun: true
+    singleRun: true,
+
+    // Webpack Config at ./webpack.test.js
+    webpack: testWebpackConfig,
+
+    // Webpack please don't spam the console when running in karma!
+    webpackMiddleware: {
+      // webpack-dev-middleware configuration
+      // i.e.
+      noInfo: true,
+      // and use stats to turn off verbose output
+      stats: {
+        // options i.e.
+        chunks: false,
+      },
+    },
   };
 
   if (process.env.TRAVIS) {
     configuration.browsers = [
-      'ChromeTravisCi'
+      'ChromeTravisCi',
     ];
   }
 

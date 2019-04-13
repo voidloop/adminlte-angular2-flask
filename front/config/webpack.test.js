@@ -34,27 +34,6 @@ module.exports = function (options) {
     devtool: 'inline-source-map',
 
     /**
-     * Options affecting the resolving of modules.
-     *
-     * See: http://webpack.github.io/docs/configuration.html#resolve
-     */
-    resolve: {
-
-      /**
-       * An array of extensions that should be used to resolve modules.
-       *
-       * See: http://webpack.github.io/docs/configuration.html#resolve-extensions
-       */
-      extensions: ['.ts', '.js'],
-
-      /**
-       * Make sure root is src
-       */
-      modules: [helpers.root('src'), 'node_modules']
-
-    },
-
-    /**
      * Options affecting the normal modules.
      *
      * See: http://webpack.github.io/docs/configuration.html#module
@@ -74,13 +53,13 @@ module.exports = function (options) {
          */
         {
           enforce: 'pre',
-          test: /\.js$/,
-          loader: 'source-map-loader',
           exclude: [
             // these packages have problems with their sourcemaps
             helpers.root('node_modules/rxjs'),
-            helpers.root('node_modules/@angular')
-          ]
+            helpers.root('node_modules/@angular'),
+          ],
+          loader: 'source-map-loader',
+          test: /\.js$/,
         },
 
         /**
@@ -89,26 +68,26 @@ module.exports = function (options) {
          * See: https://github.com/s-panferov/awesome-typescript-loader
          */
         {
+          exclude: [/\.e2e\.ts$/],
           test: /\.ts$/,
           use: [
             {
               loader: 'awesome-typescript-loader',
               query: {
-                // use inline sourcemaps for "karma-remap-coverage" reporter
-                sourceMap: false,
-                inlineSourceMap: true,
                 compilerOptions: {
 
                   // Remove TypeScript helpers to be injected
                   // below by DefinePlugin
-                  removeComments: true
+                  removeComments: true,
 
-                }
+                },
+                inlineSourceMap: true,
+                // use inline sourcemaps for "karma-remap-coverage" reporter
+                sourceMap: false,
               },
             },
-            'angular2-template-loader'
+            'angular2-template-loader',
           ],
-          exclude: [/\.e2e\.ts$/]
         },
 
         /**
@@ -117,9 +96,9 @@ module.exports = function (options) {
          * See: https://github.com/webpack/json-loader
          */
         {
-          test: /\.json$/,
+          exclude: [helpers.root('src/index.html')],
           loader: 'json-loader',
-          exclude: [helpers.root('src/index.html')]
+          test: /\.json$/,
         },
 
         /**
@@ -129,9 +108,9 @@ module.exports = function (options) {
          * See: https://github.com/webpack/raw-loader
          */
         {
-          test: /\.css$/,
+          exclude: [helpers.root('src/index.html')],
           loader: ['to-string-loader', 'css-loader'],
-          exclude: [helpers.root('src/index.html')]
+          test: /\.css$/,
         },
 
         /**
@@ -140,9 +119,9 @@ module.exports = function (options) {
          * See: https://github.com/webpack/raw-loader
          */
         {
-            test: /\.scss$/,
-            loader: ['raw-loader', 'sass-loader'],
-            exclude: [helpers.root('src/index.html')]
+          exclude: [helpers.root('src/index.html')],
+          loader: ['raw-loader', 'sass-loader'],
+          test: /\.scss$/,
         },
 
         /**
@@ -152,9 +131,9 @@ module.exports = function (options) {
          * See: https://github.com/webpack/raw-loader
          */
         {
-          test: /\.html$/,
+          exclude: [helpers.root('src/index.html')],
           loader: 'raw-loader',
-          exclude: [helpers.root('src/index.html')]
+          test: /\.html$/,
         },
 
         /**
@@ -165,16 +144,40 @@ module.exports = function (options) {
          */
         {
           enforce: 'post',
-          test: /\.(js|ts)$/,
-          loader: 'istanbul-instrumenter-loader',
-          include: helpers.root('src'),
           exclude: [
             /\.(e2e|spec)\.ts$/,
-            /node_modules/
-          ]
-        }
+            /node_modules/,
+          ],
+          include: helpers.root('src'),
+          loader: 'istanbul-instrumenter-loader',
+          test: /\.(js|ts)$/,
+        },
 
-      ]
+      ],
+    },
+
+    /**
+     * Include polyfills or mocks for various node stuff
+     * Description: Node configuration
+     *
+     * See: https://webpack.github.io/docs/configuration.html#node
+     */
+    node: {
+      clearImmediate: false,
+      crypto: 'empty',
+      global: true,
+      module: false,
+      process: false,
+      setImmediate: false,
+    },
+
+    /**
+     * Disable performance hints
+     *
+     * See: https://github.com/a-tarasyuk/rr-boilerplate/blob/master/webpack/dev.config.babel.js#L41
+     */
+    performance: {
+      hints: false,
     },
 
     /**
@@ -199,9 +202,9 @@ module.exports = function (options) {
         'HMR': false,
         'process.env': {
           'ENV': JSON.stringify(ENV),
-          'NODE_ENV': JSON.stringify(ENV),
           'HMR': false,
-        }
+          'NODE_ENV': JSON.stringify(ENV),
+        },
       }),
 
       /**
@@ -217,7 +220,7 @@ module.exports = function (options) {
         helpers.root('src'), // location of your src
         {
           // your Angular Async Route paths relative to this root directory
-        }
+        },
       ),
 
       /**
@@ -229,34 +232,31 @@ module.exports = function (options) {
         debug: false,
         options: {
           // legacy options go here
-        }
+        },
       }),
 
     ],
 
     /**
-     * Disable performance hints
+     * Options affecting the resolving of modules.
      *
-     * See: https://github.com/a-tarasyuk/rr-boilerplate/blob/master/webpack/dev.config.babel.js#L41
+     * See: http://webpack.github.io/docs/configuration.html#resolve
      */
-    performance: {
-      hints: false
+    resolve: {
+
+      /**
+       * An array of extensions that should be used to resolve modules.
+       *
+       * See: http://webpack.github.io/docs/configuration.html#resolve-extensions
+       */
+      extensions: ['.ts', '.js'],
+
+      /**
+       * Make sure root is src
+       */
+      modules: [helpers.root('src'), 'node_modules'],
+
     },
 
-    /**
-     * Include polyfills or mocks for various node stuff
-     * Description: Node configuration
-     *
-     * See: https://webpack.github.io/docs/configuration.html#node
-     */
-    node: {
-      global: true,
-      process: false,
-      crypto: 'empty',
-      module: false,
-      clearImmediate: false,
-      setImmediate: false
-    }
-
   };
-}
+};

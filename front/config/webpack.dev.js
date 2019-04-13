@@ -5,7 +5,7 @@
 const helpers = require('./helpers');
 const webpackMerge = require('webpack-merge'); // used to merge webpack configs
 const webpackMergeDll = webpackMerge.strategy({
-  plugins: 'replace'
+  plugins: 'replace',
 });
 const commonConfig = require('./webpack.common.js'); // the settings that are common to prod and dev
 
@@ -25,14 +25,13 @@ const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
 const HMR = helpers.hasProcessFlag('hot');
 const METADATA = webpackMerge(commonConfig({
-  env: ENV
+  env: ENV,
 }).metadata, {
+  ENV: ENV,
+  HMR: HMR,
   host: HOST,
   port: PORT,
-  ENV: ENV,
-  HMR: HMR
 });
-
 
 const DllBundlesPlugin = require('webpack-dll-bundles-plugin').DllBundlesPlugin;
 
@@ -43,8 +42,36 @@ const DllBundlesPlugin = require('webpack-dll-bundles-plugin').DllBundlesPlugin;
  */
 module.exports = function(options) {
   return webpackMerge(commonConfig({
-    env: ENV
+    env: ENV,
   }), {
+
+    /**
+     * Webpack Development Server configuration
+     * Description: The webpack-dev-server is a little node.js Express server.
+     * The server emits information about the compilation state to the client,
+     * which reacts to those events.
+     *
+     * See: https://webpack.github.io/docs/webpack-dev-server.html
+     */
+    devServer: {
+      historyApiFallback: true,
+      host: METADATA.host,
+      port: METADATA.port,
+      proxy: {
+        '/api': {
+          secure: false,
+          target: 'http://localhost:8080',
+        },
+        '/oauth': {
+          secure: false,
+          target: 'http://localhost:8080',
+        },
+      },
+      watchOptions: {
+        aggregateTimeout: 300,
+        poll: 1000,
+      },
+    },
 
     /**
      * Developer tool to enhance debugging
@@ -54,6 +81,60 @@ module.exports = function(options) {
      */
     devtool: 'cheap-module-source-map',
 
+    module: {
+
+      rules: [{
+        exclude: [/\.(spec|e2e)\.ts$/],
+        test: /\.ts$/,
+        use: [{
+          loader: 'tslint-loader',
+          options: {
+            configFile: 'tslint.json',
+          },
+        }],
+      },
+
+        /*
+         * css loader support for *.css files (styles directory only)
+         * Loads external css styles into the DOM, supports HMR
+         *
+         */
+        {
+          include: [helpers.root('src', 'styles')],
+          test: /\.css$/,
+          use: ['style-loader', 'css-loader'],
+        },
+
+        /*
+         * sass loader support for *.scss files (styles directory only)
+         * Loads external sass styles into the DOM, supports HMR
+         *
+         */
+        {
+          include: [helpers.root('src', 'styles')],
+          test: /\.scss$/,
+          use: ['style-loader', 'css-loader', 'sass-loader'],
+        },
+
+      ],
+
+    },
+
+    /*
+     * Include polyfills or mocks for various node stuff
+     * Description: Node configuration
+     *
+     * See: https://webpack.github.io/docs/configuration.html#node
+     */
+    node: {
+      clearImmediate: false,
+      crypto: 'empty',
+      global: true,
+      module: false,
+      process: true,
+      setImmediate: false,
+    },
+
     /**
      * Options affecting the output of the compilation.
      *
@@ -61,12 +142,12 @@ module.exports = function(options) {
      */
     output: {
 
-      /**
-       * The output directory as absolute path (required).
+      /** The filename of non-entry chunks as relative path
+       * inside the output.path directory.
        *
-       * See: http://webpack.github.io/docs/configuration.html#output-path
+       * See: http://webpack.github.io/docs/configuration.html#output-chunkfilename
        */
-      path: helpers.root('dist'),
+      chunkFilename: '[id].chunk.js',
 
       /**
        * Specifies the name of each output file on disk.
@@ -76,6 +157,16 @@ module.exports = function(options) {
        */
       filename: '[name].bundle.js',
 
+      library: 'ac_[name]',
+
+      libraryTarget: 'var',
+
+      /**
+       * The output directory as absolute path (required).
+       *
+       * See: http://webpack.github.io/docs/configuration.html#output-path
+       */
+      path: helpers.root('dist'),
       /**
        * The filename of the SourceMaps for the JavaScript files.
        * They are inside the output.path directory.
@@ -83,55 +174,6 @@ module.exports = function(options) {
        * See: http://webpack.github.io/docs/configuration.html#output-sourcemapfilename
        */
       sourceMapFilename: '[file].map',
-
-      /** The filename of non-entry chunks as relative path
-       * inside the output.path directory.
-       *
-       * See: http://webpack.github.io/docs/configuration.html#output-chunkfilename
-       */
-      chunkFilename: '[id].chunk.js',
-
-      library: 'ac_[name]',
-      libraryTarget: 'var',
-    },
-
-    module: {
-
-      rules: [{
-          test: /\.ts$/,
-          use: [{
-            loader: 'tslint-loader',
-            options: {
-              configFile: 'tslint.json'
-            }
-          }],
-          exclude: [/\.(spec|e2e)\.ts$/]
-        },
-
-        /*
-         * css loader support for *.css files (styles directory only)
-         * Loads external css styles into the DOM, supports HMR
-         *
-         */
-        {
-          test: /\.css$/,
-          use: ['style-loader', 'css-loader'],
-          include: [helpers.root('src', 'styles')]
-        },
-
-        /*
-         * sass loader support for *.scss files (styles directory only)
-         * Loads external sass styles into the DOM, supports HMR
-         *
-         */
-        {
-          test: /\.scss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
-          include: [helpers.root('src', 'styles')]
-        },
-
-      ]
-
     },
 
     plugins: [
@@ -151,9 +193,9 @@ module.exports = function(options) {
         'HMR': METADATA.HMR,
         'process.env': {
           'ENV': JSON.stringify(METADATA.ENV),
-          'NODE_ENV': JSON.stringify(METADATA.ENV),
           'HMR': METADATA.HMR,
-        }
+          'NODE_ENV': JSON.stringify(METADATA.ENV),
+        },
       }),
 
       new DllBundlesPlugin({
@@ -162,11 +204,11 @@ module.exports = function(options) {
             'core-js',
             {
               name: 'zone.js',
-              path: 'zone.js/dist/zone.js'
+              path: 'zone.js/dist/zone.js',
             },
             {
               name: 'zone.js',
-              path: 'zone.js/dist/long-stack-trace-zone.js'
+              path: 'zone.js/dist/long-stack-trace-zone.js',
             },
           ],
           vendor: [
@@ -179,15 +221,15 @@ module.exports = function(options) {
             '@angular/router',
             '@angularclass/hmr',
             'rxjs',
-          ]
+          ],
         },
         dllDir: helpers.root('dll'),
         webpackConfig: webpackMergeDll(commonConfig({
-          env: ENV
+          env: ENV,
         }), {
           devtool: 'cheap-module-source-map',
-          plugins: []
-        })
+          plugins: [],
+        }),
       }),
 
       /**
@@ -199,11 +241,11 @@ module.exports = function(options) {
        * See: https://github.com/SimenB/add-asset-html-webpack-plugin
        */
       new AddAssetHtmlPlugin([{
-          filepath: helpers.root(`dll/${DllBundlesPlugin.resolveFile('polyfills')}`)
+          filepath: helpers.root(`dll/${DllBundlesPlugin.resolveFile('polyfills')}`),
         },
         {
-          filepath: helpers.root(`dll/${DllBundlesPlugin.resolveFile('vendor')}`)
-        }
+          filepath: helpers.root(`dll/${DllBundlesPlugin.resolveFile('vendor')}`),
+        },
       ]),
 
       /**
@@ -222,54 +264,10 @@ module.exports = function(options) {
       new LoaderOptionsPlugin({
         debug: true,
         options: {
-
-        }
+        },
       }),
 
     ],
 
-    /**
-     * Webpack Development Server configuration
-     * Description: The webpack-dev-server is a little node.js Express server.
-     * The server emits information about the compilation state to the client,
-     * which reacts to those events.
-     *
-     * See: https://webpack.github.io/docs/webpack-dev-server.html
-     */
-    devServer: {
-      port: METADATA.port,
-      host: METADATA.host,
-      historyApiFallback: true,
-      watchOptions: {
-        aggregateTimeout: 300,
-        poll: 1000
-      },
-      proxy: {
-        '/api': {
-          target: 'http://localhost:8080',
-          secure: false
-        },
-        '/oauth': {
-          target: 'http://localhost:8080',
-          secure: false
-        }
-      }
-    },
-
-    /*
-     * Include polyfills or mocks for various node stuff
-     * Description: Node configuration
-     *
-     * See: https://webpack.github.io/docs/configuration.html#node
-     */
-    node: {
-      global: true,
-      crypto: 'empty',
-      process: true,
-      module: false,
-      clearImmediate: false,
-      setImmediate: false
-    }
-
   });
-}
+};
